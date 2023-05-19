@@ -20,7 +20,7 @@
 
     // Handle preflight OPTIONS request
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-        header('HTTP/1.1 200 OK');
+        http_response_code(200);
         //exit();
     }
     
