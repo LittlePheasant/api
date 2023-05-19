@@ -8,16 +8,16 @@
             ]);
     endif;
 
-    error_reporting(E_ERROR);
-    
+    //error_reporting(E_ERROR);
+
     // Handle preflight OPTIONS request
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
         header('HTTP/1.1 200 OK');
-        exit();
+        //exit();
     }
 
     header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Headers: Accept, Origin, Content-Type, Authorization, X-Requested-With");
+    header("Access-Control-Allow-Headers: Accept, Content-Type, Authorization, X-Requested-With");
     header("Access-Control-Allow-Methods: POST");
     //header("Access-Control-Allow-Credentials: true");
     header("Content-Type: application/json; charset=UTF-8");
