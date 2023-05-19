@@ -1,26 +1,28 @@
 <?php
 
+
+
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Headers: access, Content-Type, Authorization, X-Requested-With");
+    header("Access-Control-Allow-Methods: POST, OPTIONS");
+    //header("Access-Control-Allow-Credentials: true");
+    header("Content-Type: application/json; charset=UTF-8");
+
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') :
-            http_response_code(405);
-            echo json_encode([
-                'success' => 0,
-                'message' => 'Bad Request!.Only POST method is allowed',
-            ]);
+        http_response_code(405);
+        echo json_encode([
+            'success' => 0,
+            'message' => 'Bad Request!.Only POST method is allowed',
+        ]);
     endif;
 
-    //error_reporting(E_ERROR);
+    error_reporting(E_ERROR);
 
     // Handle preflight OPTIONS request
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
         header('HTTP/1.1 200 OK');
         //exit();
     }
-
-    header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Headers: Accept, Content-Type, Authorization, X-Requested-With");
-    header("Access-Control-Allow-Methods: POST");
-    //header("Access-Control-Allow-Credentials: true");
-    header("Content-Type: application/json; charset=UTF-8");
     
     require 'db_connect.php';
     $database = new Operations();
