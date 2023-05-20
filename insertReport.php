@@ -31,7 +31,7 @@
 
     //echo json_encode($data);
 
-    $user_id = null; //Set user_id
+    $user_id = $data->user_id; //Set user_id
     
 
     //Get the file name and temporay location
@@ -146,7 +146,7 @@
 
 
         if ($stmt->execute()) {
-            $particular_id = 1;
+            
             //http_response_code(201);
             echo json_encode([
                 'success' => 1,
@@ -158,7 +158,8 @@
                 'message' => 'There is some problem in data inserting'
             ]);
         }
-
+        $particular_id = 1;
+        
         $query = "SELECT 1 FROM `actualreportbytotal_tbl` WHERE user_id = :user_id AND particular_id = :particular_id";
         $stmt = $conn->prepare($query);
         $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
