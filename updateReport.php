@@ -1,15 +1,16 @@
 <?php
     header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Headers: access, Content-Type, Authorization, X-Requested-With");
-    header("Access-Control-Allow-Methods: PUT");
+    header("Access-Control-Allow-Methods: PUT, OPTIONS");
     header("Access-Control-Allow-Credentials: true");
-    header("Content-Type: application/json; charset=UTF-8");
+    header("Content-Type: application/json");
 
 
     error_reporting(E_ERROR);
     $method = $_SERVER['REQUEST_METHOD'];
 
     if ($method == "OPTIONS") {
+        header("Content-Type: application/json");
         die();
     }
 
