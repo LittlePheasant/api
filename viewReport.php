@@ -1,9 +1,9 @@
 <?php
     header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Headers: access, Content-Type, Authorization, X-Requested-With");
-    header("Access-Control-Allow-Methods: GET");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+    header("Access-Control-Allow-Methods: GET, OPTIONS");
     header("Access-Control-Allow-Credentials: true");
-    header("Content-Type: application/json; charset=UTF-8");
+    header("Content-Type: application/json");
 
     error_reporting(E_ERROR);
     if ($_SERVER['REQUEST_METHOD'] !== 'GET') :
