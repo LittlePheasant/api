@@ -22,8 +22,8 @@
     $userid = null;
     $entryid = null;
 
-    if (isset($_GET['id'])) {
-        $userid = filter_var($_GET['id'], FILTER_VALIDATE_INT, [
+    if (isset($_GET['userid'])) {
+        $userid = filter_var($_GET['userid'], FILTER_VALIDATE_INT, [
             'options' => [
                 'default' => 'all_records',
                 'min_range' => 1
@@ -64,7 +64,7 @@
             }
 
             echo json_encode($result);
-            echo json_encode($userRole);
+            //echo json_encode($userRole);
         } else {
             // $sql = "SELECT * FROM `monthlyreport_tbl` WHERE entry_id = :entryid";
             // $stmt = $conn->prepare($sql);
