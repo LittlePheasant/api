@@ -2,9 +2,14 @@
     class Operations
     {
     
+        // private $db_host = 'localhost';
+        // private $db_name = 'id20554492_oeswebsite_db';
+        // private $db_username = 'id20554492_root';
+        // private $db_password = '000WEBhost@keanna';
+
         private $db_host = 'localhost';
-        private $db_name = 'id20554492_oeswebsite_db';
-        private $db_username = 'id20554492_root';
+        private $db_name = 'esowebdb';
+        private $db_username = 'root';
         private $db_password = '000WEBhost@keanna';
     
     
