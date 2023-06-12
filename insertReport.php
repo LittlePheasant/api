@@ -261,24 +261,24 @@
 
             if (!empty($data->satisfactory_rate) && !empty($data->verysatisfactory_rate) && !empty($data->excellent_rate)) {
                 
-                $countQuery = "SELECT SUM(count_male) AS total_male, 
-                        SUM(count_female) AS total_female,
-                        SUM(satisfactory_rate) AS total_srate,
-                        SUM(verysatisfactory_rate) AS total_vsrate,
-                        SUM(excellent_rate) AS total_erate
-                FROM `monthlyreport_tbl` WHERE user_id = :userid";
+                $countQuery = "SELECT count_male, 
+                                      count_female, satisfactory_rate, verysatisfactory_rate, excellent_rate
+                               FROM `monthlyreport_tbl` WHERE user_id = :user_id";
 
                 $countStmt = $conn->prepare($countQuery);
-                $countStmt->bindValue(':userid', $userid, PDO::PARAM_INT);
+                $countStmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
                 $countStmt->execute();
                 $countResult = $countStmt->fetch(PDO::FETCH_ASSOC);
 
                 $particular_id = 4;
-                $total_srate = $countResult['total_srate'];
-                $total_vsrate = $countResult['total_vsrate'];
-                $total_erate = $countResult['total_erate'];
-                $total_count_male_female = $countResult['total_male'] + $countResult['total_female'];
-                $sum = $total_srate + $total_vsrate + $total_erate;
+                $count_male = $countResult['count_male'];
+                $count_female = $countResult['count_female'];
+                $satisfactory_rate = $countResult['satisfactory_rate'];
+                $verysatisfactory_rate = $countResult['verysatisfactory_rate'];
+                $excellent_rate = $countResult['excellent_rate'];
+
+                $total_count_male_female = ($count_male + $count_female);
+                $sum = ($satisfactory_rate + $verysatisfactory_rate + $excellent_rate);
                 $result = null;
 
                 if ($sum === $total_count_male_female) {
@@ -295,29 +295,28 @@
                 ];
 
                 echo json_encode($output);
-                var_dump($total_srate);
 
-                // $query = "UPDATE `actualreportbytotal_tbl` SET count = $result WHERE user_id = :user_id AND particular_id = :particular_id";
-                // $stmt = $conn->prepare($query);
-                // $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
-                // $stmt->bindValue(':particular_id', $particular_id, PDO::PARAM_INT);
-                
-                // if ($stmt->execute()) {
-                //     // Count field updated successfully
-                //     //http_response_code(201);
-                //     echo json_encode([
-                //         'success' => 2,
-                //         'message' => 'Data Inserted Successfully. Count field updated.',
-                //         'data' => $result,
-                //     ]);
-                // } else {
-                //     // Failed to update count field
-                //     //http_response_code(500);
-                //     echo json_encode([
-                //         'success' => 0,
-                //         'message' => 'Failed to update count field in actualaccreport table.'
-                //     ]);
-                // }
+                $query = "UPDATE `actualreportbytotal_tbl` SET count = $result WHERE user_id = :user_id AND particular_id = :particular_id";
+                $stmt = $conn->prepare($query);
+                $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+                $stmt->bindValue(':particular_id', $particular_id, PDO::PARAM_INT);
+
+                if ($stmt->execute()) {
+                    // Count field updated successfully
+                    //http_response_code(201);
+                    echo json_encode([
+                        'success' => 4,
+                        'message' => 'Count field updated.',
+                        'data' => $result,
+                    ]);
+                } else {
+                    // Failed to update count field
+                    //http_response_code(500);
+                    echo json_encode([
+                        'success' => 0,
+                        'message' => 'Failed to update count field in actualaccreport table.'
+                    ]);
+                }
 
             }
 
