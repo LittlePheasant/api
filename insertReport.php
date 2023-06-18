@@ -56,8 +56,8 @@
     try {
 
         $user_id = $user_id;
+        $programOpt = $data->programOpt;
         $date_entry = htmlspecialchars(trim($data->date_entry));
-        $facilitator = htmlspecialchars(trim($data->facilitator));
         $title = htmlspecialchars(trim($data->title));
         $type_beneficiary = htmlspecialchars(trim($data->type_beneficiary));
         $count_male = $data->count_male;
@@ -79,8 +79,8 @@
     
         $query = "INSERT INTO `monthlyreport_tbl`(
         user_id,
+        program_id,
         date_entry,
-        facilitator,
         title,
         type_beneficiary,
         count_male,
@@ -101,8 +101,8 @@
         ) 
         VALUES(
         :user_id,
+        :program_id,
         :date_entry,
-        :facilitator,
         :title,
         :type_beneficiary,
         :count_male,
@@ -125,8 +125,8 @@
         $stmt = $conn->prepare($query);
 
         $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+        $stmt->bindValue(':program_id', $program_id, PDO::PARAM_INT);
         $stmt->bindValue(':date_entry', $date_entry, PDO::PARAM_STR);
-        $stmt->bindValue(':facilitator', $facilitator, PDO::PARAM_STR);
         $stmt->bindValue(':title', $title, PDO::PARAM_STR);
         $stmt->bindValue(':type_beneficiary', $type_beneficiary, PDO::PARAM_STR);
         $stmt->bindValue(':count_male', $count_male, PDO::PARAM_INT);
