@@ -35,28 +35,33 @@
     $user_id = $data->user_id; //Set user_id
     
 
-    //Get the file name and temporay location
-    $fileName = $data->_file;
-    $tmpName = $fileName;
-    //echo json_encode($fileName);
+    // Get the temporary file name
+    $tmpName = $_FILES['file']['tmp_name'];
 
-    //Set the directory to store the file in 
-    $uploadDir = 'uploads/';
+    // Set the directory to store the file in
+    $uploadDir = 'uploads/attachments/';
+
+    // Generate a unique file name to avoid conflicts
+    $fileName = uniqid() . '_' . $_FILES['file']['name'];
+
+    // Set the file path
     $filePath = $uploadDir . $fileName;
 
-    //Move the file to the directory
-    if(move_uploaded_file($tmpName, $filePath)){
-
-        //File uploaded Successfully
-        //Now save the file path to the database using pdo
-        echo('1');
-        
+    // Move the file to the directory
+    if (move_uploaded_file($tmpName, $filePath)) {
+        // File uploaded successfully
+        // Now save the file path to the database using PDO
+        echo '1';
+    } else {
+        // Failed to upload the file
+        echo '0';
     }
+
     
     try {
 
         $user_id = $user_id;
-        $programOpt = $data->programOpt;
+        $program_id = $data->program_id;
         $date_entry = htmlspecialchars(trim($data->date_entry));
         $title = htmlspecialchars(trim($data->title));
         $type_beneficiary = htmlspecialchars(trim($data->type_beneficiary));

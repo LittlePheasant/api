@@ -44,6 +44,9 @@
             $stmt->bindValue(':entryid', $entryid, PDO::PARAM_INT);
             $stmt->execute();
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            echo json_encode($result);
+
         } else {
             $sql = "SELECT user_role FROM `user_tbl` WHERE user_id = :userid";
 
@@ -62,17 +65,21 @@
                     $stmt = $conn->prepare($sql);
                     $stmt->execute();
                     $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    
                 } else {
                     // User doesn't have 'admin' role, select specific data based on userid
                     $sql = "SELECT * FROM `monthlyreport_tbl` WHERE user_id = :userid";
                     $stmt = $conn->prepare($sql);
                     $stmt->bindValue(':userid', $userid, PDO::PARAM_INT);
                     $stmt->execute();
-                    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    $result = $stmt->fetch(PDO::FETCH_ASSOC);
                 }
 
                 
-                //echo json_encode($userRole);
+                echo json_encode([
+                    // 'userRole'=>$userRole,
+                    'data' => $result
+                ]);
             } else {
 
                 // echo json_encode($result);
@@ -84,7 +91,7 @@
             }
         }
 
-        echo json_encode($result);
+        //echo json_encode($result);
         
 
     } catch (PDOException $e) {
