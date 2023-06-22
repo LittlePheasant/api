@@ -63,7 +63,7 @@
                     echo json_encode($fetchdata);
 
                 } else {
-                    $sql = "SELECT p.particulars, u.name, a.count
+                    $sql = "SELECT a.particular_id, p.particulars, u.name, a.count
                     FROM user_tbl u
                     INNER JOIN actualreportbytotal_tbl a ON u.user_id = a.user_id
                     INNER JOIN particulars_tbl p ON a.particular_id = p.particulars_id";
@@ -78,17 +78,18 @@
                     // Group the fetched data by "particulars" column
                     foreach ($fetchdata as $row) {
                         $particulars = $row['particulars'];
+                        $particular_id = $row['particular_id'];
 
-                        if (!isset($rows[$particulars])) {
-                            $rows[$particulars] = array();
+                        if (!isset($rows[$particular_id])) {
+                            $rows[$particular_id] = array();
                         }
 
-                        $rows[$particulars][] = $row;
+                        $rows[$particular_id][] = $row;
                         // echo json_encode([$rows]);
                     }
 
                     echo json_encode([
-                        $rows
+                        'fetchdata' => $rows
                     ]);
                 }
                 

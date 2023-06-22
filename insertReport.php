@@ -39,7 +39,7 @@
     $tmpName = $_FILES['file']['tmp_name'];
 
     // Set the directory to store the file in
-    $uploadDir = 'uploads/attachments/';
+    $uploadDir = 'attachments/proofs/';
 
     // Generate a unique file name to avoid conflicts
     $fileName = uniqid() . '_' . $_FILES['file']['name'];
@@ -79,7 +79,7 @@
         $fac_staff = htmlspecialchars(trim($data->fac_staff));
         $role = htmlspecialchars(trim($data->role));
         $cost_fund = $data->cost_fund;
-        $filePath = basename($filePath);
+        $fileName = $fileName;
 
     
         $query = "INSERT INTO `monthlyreport_tbl`(
@@ -124,7 +124,7 @@
         :fac_staff,
         :role,
         :cost_fund,
-        :_file
+        :fileName
         )";
     
         $stmt = $conn->prepare($query);
@@ -148,7 +148,7 @@
         $stmt->bindValue(':fac_staff', $fac_staff, PDO::PARAM_STR);
         $stmt->bindValue(':role', $role, PDO::PARAM_STR);
         $stmt->bindValue(':cost_fund', $cost_fund, PDO::PARAM_INT);
-        $stmt->bindValue(':_file', $filePath, PDO::PARAM_STR);
+        $stmt->bindValue(':fileName', $fileName, PDO::PARAM_STR);
 
 
         if ($stmt->execute()) {
