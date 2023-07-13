@@ -28,7 +28,7 @@
                 'min_range' => 1
             ]
         ]);
-        echo json_encode($id);
+        //echo json_encode($id);
     }
 
     try {
@@ -40,7 +40,7 @@
 
         $stmt->execute();
         
-        if ($stmt->rowCount() > 0) :
+        if ($stmt->rowCount() > 0) {
 
             $data = null;
             if (is_numeric($id)) {
@@ -56,12 +56,12 @@
                 $data
             );
 
-        else :
+        } else {
             echo json_encode([
                 'success' => 0,
                 'message' => 'No Record Found!',
             ]);
-        endif;
+        }
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode([

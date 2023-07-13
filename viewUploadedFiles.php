@@ -30,7 +30,8 @@
         ]);
     }
 
-    try {
+
+    try { 
 
         if (!empty($userid)){
             $userRoleQuery = "SELECT user_role FROM `user_tbl` WHERE user_id = :userid";
@@ -41,33 +42,15 @@
             $userRoleResult = $userRoleStmt->fetch(PDO::FETCH_ASSOC);
             $userRole = $userRoleResult['user_role'];
 
-            $fetchData = null;
+            $sql = "SELECT * FROM `downloadable_files_tbl`";
+            $stmt = $conn->prepare($sql);
+            $stmt->execute();
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            if ($userRole === 'Admin') {
-                $sql = "SELECT program_id, program, description FROM `college_programs_tbl`";
-                $stmt = $conn->prepare($sql);
-                $stmt ->execute();
-
-                if ($stmt->rowCount() > 0) {
-                    $fetchData = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                } else {
-                    $fetchData = $stmt->fetch(PDO::FETCH_ASSOC);
-                }
-            } else {
-                // Query the database to fetch the programs based on the user ID
-                $sql = "SELECT program_id, program, description FROM `college_programs_tbl` WHERE user_id = :userid";
-                $stmt = $conn->prepare($sql);
-                $stmt->bindValue(':userid', $userid);
-                $stmt->execute();
-
-                // Fetch the program options
-                $fetchData = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            }
-
-            // Send the response as JSON
-            echo json_encode($fetchData);
-
+            echo json_encode([
+                'data' => $result,
+                'userRole' => $userRole
+            ]);
         }
 
     } catch (PDOException $e) {
@@ -78,4 +61,5 @@
         ]);
         exit;
     }
+
 ?>
