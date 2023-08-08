@@ -1,6 +1,6 @@
 <?php
     header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+    header("Access-Control-Allow-Headers: Content-Type, AUTHORization, X-Requested-With");
     header("Access-Control-Allow-Methods: GET, OPTIONS");
     header("Access-Control-Allow-Credentials: true");
     header("Content-Type: application/json");
@@ -23,6 +23,7 @@
 
     $userid = null;
     $entryid = null;
+    $programid = null;
 
     if (isset($_GET['id'])) {
         $userid = filter_var($_GET['id'], FILTER_VALIDATE_INT, [
@@ -37,6 +38,16 @@
     if (isset($_GET['entry_id'])) {
         $entryid = $_GET['entry_id'];
     }
+
+    if (isset($_GET['programid'])) {
+        $programid = filter_var($_GET['programid'], FILTER_VALIDATE_INT, [
+            'options' => [
+                'default' => 'all_records',
+                'min_range' => 1
+            ]
+        ]);
+        
+    }
     
     try {
 
@@ -50,10 +61,10 @@
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         $userRole = $row['user_role'];
         
-        if ($userRole === 'Admin') {
+        if ($userRole === 'ADMIN') {
 
             if (!empty($entryid)) {
-                //Admin view single data by entry id
+                //ADMIN view single data by entry id
                 $sql = "SELECT * FROM `monthlyreport_tbl` WHERE entry_id = :entryid";
                 $stmt = $conn->prepare($sql);
                 $stmt->bindValue(':entryid', $entryid, PDO::PARAM_INT);
@@ -76,46 +87,77 @@
                     header('Content-Length: ' . $fileSize);
 
                     //readfile($filePath);
-                    $responseData = ['name' => $fileName, 'size' => $fileSize, 'type' => $fileType];
+
+                    $result = array(
+                        'entry_id' => $row['entry_id'],
+                        'user_id' => $row['user_id'],
+                        'program_id' => $row['program_id'],
+                        'date_entry' => $row['date_entry'],
+                        'title' => $row['title'],
+                        'type_beneficiary' => $row['type_beneficiary'],
+                        'count_male' => $row['count_male'],
+                        'count_female' => $row['count_female'],
+                        'poor_rate' => $row['poor_rate'],
+                        'fair_rate' => $row['fair_rate'],
+                        'satisfactory_rate' => $row['satisfactory_rate'],
+                        'verysatisfactory_rate' => $row['verysatisfactory_rate'],
+                        'excellent_rate' => $row['excellent_rate'],
+                        'duration' => $row['duration'],
+                        'unitOpt' => $row['unitOpt'],
+                        'serviceOpt' => $row['serviceOpt'],
+                        'partners' => $row['partners'],
+                        'fac_staff' => $row['fac_staff'],
+                        'role' => $row['role'],
+                        'cost_fund' => $row['cost_fund'],
+                        'file' => $fileName
+                    );
+    
                 } else {
                     // File not found
                     header('HTTP/1.0 404 Not Found');
                     echo json_encode(['error' => 'File not found']);
                 }
 
-                $result = array(
-                    'entry_id' => $row['entry_id'],
-                    'user_id' => $row['user_id'],
-                    'program_id' => $row['program_id'],
-                    'date_entry' => $row['date_entry'],
-                    'title' => $row['title'],
-                    'type_beneficiary' => $row['type_beneficiary'],
-                    'count_male' => $row['count_male'],
-                    'count_female' => $row['count_female'],
-                    'poor_rate' => $row['poor_rate'],
-                    'fair_rate' => $row['fair_rate'],
-                    'satisfactory_rate' => $row['satisfactory_rate'],
-                    'verysatisfactory_rate' => $row['verysatisfactory_rate'],
-                    'excellent_rate' => $row['excellent_rate'],
-                    'duration' => $row['duration'],
-                    'unitOpt' => $row['unitOpt'],
-                    'serviceOpt' => $row['serviceOpt'],
-                    'partners' => $row['partners'],
-                    'fac_staff' => $row['fac_staff'],
-                    'role' => $row['role'],
-                    'cost_fund' => $row['cost_fund'],
-                    'file' => $responseData
-                );
+            } elseif (!empty($programid)) {
+
+                // User has 'ADMIN' role, select all data from monthlyreport_tbl
+                $sql = "SELECT m.*,u.name, u.campus_name, c.description
+                 FROM `monthlyreport_tbl` m
+                 INNER JOIN `user_tbl` u ON m.user_id = u.user_id
+                 INNER JOIN `college_programs_tbl` c ON c.program_id = m.program_id
+                 WHERE m.program_id = :programid AND YEAR(date_entry) = YEAR(CURDATE())";
+                $stmt = $conn->prepare($sql);
+                $stmt->bindValue(':programid', $programid, PDO::PARAM_INT);
+                $stmt->execute();
+
+                if ($stmt->rowCount() > 0) {
+                    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                } else {
+                    $sql = "SELECT u.campus_name, c.description
+                    FROM `user_tbl` u
+                    INNER JOIN `college_programs_tbl` c ON c.user_id = u.user_id
+                    WHERE c.program_id = :programid";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bindValue(':programid', $programid, PDO::PARAM_INT);
+                    $stmt->execute();
+                    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                }
+                
 
             } else {
-                // User has 'admin' role, select all data from monthlyreport_tbl
-                $sql = "SELECT * FROM `monthlyreport_tbl`";
+
+                // User has 'ADMIN' role, select all data from monthlyreport_tbl
+                $sql = "SELECT m.*, u.name
+                 FROM `monthlyreport_tbl` m
+                 INNER JOIN `user_tbl` u ON u.user_id = m.user_id
+                 WHERE YEAR(date_entry) = YEAR(CURDATE())";
                 $stmt = $conn->prepare($sql);
                 $stmt->execute();
                 $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
             }
             
-        } else if ($userRole === 'Author'){
+        } else if ($userRole === 'AUTHOR'){
 
             if (!empty($entryid)) {
 
@@ -145,8 +187,7 @@
                     $responseData = ['name' => $fileName, 'size' => $fileSize, 'type' => $fileType];
                 } else {
                     // File not found
-                    header('HTTP/1.0 404 Not Found');
-                    echo json_encode(['error' => 'File not found']);
+                    echo json_encode(['message' => 'File not found']);
                 }
 
                 $result = array(
@@ -173,12 +214,38 @@
                     'file' => $responseData
                 );
 
+            } elseif (!empty($programid)) {
+
+                $sql = "SELECT m.*, u.name, u.campus_name, c.description
+                 FROM `monthlyreport_tbl` m
+                 INNER JOIN `user_tbl` u ON m.user_id = u.user_id
+                 INNER JOIN `college_programs_tbl` c ON c.program_id = m.program_id
+                 WHERE m.program_id = :programid AND YEAR(date_entry) = YEAR(CURDATE())";
+                $stmt = $conn->prepare($sql);
+                //$stmt->bindValue(':userid', $userid, PDO::PARAM_INT);
+                $stmt->bindValue(':programid', $programid, PDO::PARAM_INT);
+                $stmt->execute();
+                
+                if ($stmt->rowCount() > 0) {
+                    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                } else {
+                    $sql = "SELECT u.campus_name, c.description
+                    FROM `user_tbl` u
+                    INNER JOIN `college_programs_tbl` c ON c.user_id = u.user_id
+                    WHERE c.program_id = :programid";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bindValue(':programid', $programid, PDO::PARAM_INT);
+                    $stmt->execute();
+                    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                }
+                
             } else {
 
-                // User doesn't have 'admin' role, select specific data based on userid
-                $sql = "SELECT m.*, u.user_role FROM `monthlyreport_tbl` m
+                // User doesn't have 'ADMIN' role, select specific data based on userid
+                $sql = "SELECT m.*, u.name, u.user_role FROM `monthlyreport_tbl` m
                 INNER JOIN `user_tbl` u ON m.user_id = u.user_id 
-                WHERE m.user_id = :userid";
+                WHERE m.user_id = :userid 
+                AND YEAR(date_entry) = YEAR(CURDATE())";
                 $stmt = $conn->prepare($sql);
                 $stmt->bindValue(':userid', $userid, PDO::PARAM_INT);
                 $stmt->execute();

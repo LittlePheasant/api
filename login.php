@@ -1,6 +1,6 @@
 <?php
     header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+    header("Access-Control-Allow-Headers: Content-Type, AUTHORization, X-Requested-With");
     header("Access-Control-Allow-Methods: POST, OPTIONS");
     header("Access-Control-Allow-Credentials: true");
     header("Content-Type: application/json");
@@ -34,7 +34,7 @@
     $password = $data->password;
 
     try {
-        $sql = "SELECT user_id, user_role FROM `user_tbl` WHERE username = '$email' AND user_password = '$password'";
+        $sql = "SELECT user_id, user_role FROM `user_tbl` WHERE user_email = '$email' AND user_password = '$password'";
         $stmt = $conn->prepare($sql);
         // $stmt->bindValue(':email', $email, PDO::PARAM_STR);
         // $stmt->bindValue(':password', $password, PDO::PARAM_STR);

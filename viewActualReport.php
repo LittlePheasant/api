@@ -1,6 +1,6 @@
 <?php
     header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+    header("Access-Control-Allow-Headers: Content-Type, AUTHORization, X-Requested-With");
     header("Access-Control-Allow-Methods: GET, OPTIONS");
     header("Access-Control-Allow-Credentials: true");
     header("Content-Type: application/json");
@@ -25,7 +25,7 @@
     if (isset($_GET['particular_id'])) {
         $particular_id = filter_var($_GET['particular_id'], FILTER_VALIDATE_INT, [
             'options' => [
-                'default' => 'all_records',
+                'default' => null,
                 'min_range' => 1
             ]
         ]);
@@ -47,7 +47,7 @@
             $userRoleResult = $userRoleStmt->fetch(PDO::FETCH_ASSOC);
             $userRole = $userRoleResult['user_role'];
 
-            if ($userRole === 'Admin') {
+            if ($userRole === 'ADMIN') {
 
                 if (isset($particular_id) && isset($user_id)) {
                     $sql = "SELECT u.name, a.count
@@ -60,49 +60,62 @@
                     $stmt->execute();
 
                     $fetchdata = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-                    $sql = "SELECT u.name, a.count
-                    FROM `actualreportbytotal_tbl` a
-                    INNER JOIN `user_tbl` u ON u.user_id = a.user_id
-                    WHERE a.particular_id = :particular_id";
-            
-                    $stmt = $conn->prepare($sql);
-                    $stmt->bindValue(':particular_id', $particular_id, PDO::PARAM_INT);
-                    $stmt->execute();
-                    
-                    $fetchdata = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     
                     $combinedData = [];
                     
-                    if ($particular_id == 4) {
-                        // Remove duplicates and fetch a single count value for each name
-                        $uniqueNames = [];
-                        
+                    if ($particular_id === 4) {
+
+                        $sql = "SELECT COUNT(m.date_entry) as total_count, u.name
+                        FROM `monthlyreport_tbl` m
+                        INNER JOIN `user_tbl` u ON u.user_id = m.user_id
+                        GROUP BY u.name";
+                        $stmt = $conn->prepare($sql);
+                        $stmt->execute();
+                        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                        $rowCounts = []; // To store the total count for each user
+                        $totalCounts = [];
+
+                        // Calculate the total count for each user and store it in the $totalCounts array
+                        foreach ($data as $item) {
+                            $name = $item['name'];
+                            $total_count = doubleval($item['total_count']);
+                            $rowCounts[$name] += $total_count;
+                        }
+
                         foreach ($fetchdata as $item) {
                             $name = $item['name'];
-                            $count = intval($item['count']);
+                            $count = doubleval($item['count']);
+
+                            $totalCounts[$name] += $count;
                             
-                            if (!in_array($name, $uniqueNames)) {
-                                $uniqueNames[] = $name;
-                                $combinedData[] = [
-                                    "name" => $name,
-                                    "count" => $count
-                                ];
-                            }
                         }
+
+                        // Calculate the adjusted count for each user based on the total count from actualreportbytotal_tbl
+                        // and the corresponding total count from monthlyreport_tbl
+                        foreach ($totalCounts as $name => $count) {
+                            $adjustedCount = $count / $rowCounts[$name];
+                            $combinedData[] = [
+                                "name" => $name,
+                                "count" => $adjustedCount
+                            ];
+                        }
+                        
+
                     } else {
                         // Perform the computation as before
                         $combinedCounts = [];
                     
                         foreach ($fetchdata as $item) {
                             $name = $item['name'];
-                            $count = intval($item['count']);
+                            $count = doubleval($item['count']);
                             
                             if (!isset($combinedCounts[$name])) {
                                 $combinedCounts[$name] = 0;
                             }
-                            
+
                             $combinedCounts[$name] += $count;
+
                         }
                     
                         foreach ($combinedCounts as $name => $count) {
@@ -111,16 +124,17 @@
                                 "count" => $count
                             ];
                         }
+                        
                     }
                     
                     echo json_encode($combinedData);
                     
                 } else {
                     $sql = "SELECT p.particulars_id, p.particulars, a.quarter_id, u.name, a.count
-                    FROM user_tbl u
-                    INNER JOIN actualreportbytotal_tbl a ON u.user_id = a.user_id
-                    INNER JOIN particulars_tbl p ON a.particular_id = p.particulars_id
-                    ORDER BY p.particulars_id = a.particular_id";
+                    FROM `user_tbl` u
+                    INNER JOIN `actualreportbytotal_tbl` a ON u.user_id = a.user_id
+                    INNER JOIN `particulars_tbl` p ON a.particular_id = p.particulars_id
+                    ORDER BY a.particular_id ASC";
 
                     $stmt = $conn->prepare($sql);
                     $stmt->execute();

@@ -1,6 +1,6 @@
 <?php
     header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Headers: access, Content-Type, Authorization, X-Requested-With");
+    header("Access-Control-Allow-Headers: access, Content-Type, AUTHORization, X-Requested-With");
     header("Access-Control-Allow-Methods: DELETE, OPTIONS");
     header("Access-Control-Allow-Credentials: true");
     header("Content-Type: application/json");

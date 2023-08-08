@@ -1,6 +1,6 @@
 <?php
     header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+    header("Access-Control-Allow-Headers: Content-Type, AUTHORization, X-Requested-With");
     header("Access-Control-Allow-Methods: GET, OPTIONS");
     header("Access-Control-Allow-Credentials: true");
     header("Content-Type: application/json");
@@ -20,11 +20,19 @@
     $conn = $database->dbConnection();
 
     $userid = null;
+    $programid = null;
 
-    if (isset($_GET['id'])) {
+    if (isset($_GET['id']) || isset($_GET['programid'])) {
         $userid = filter_var($_GET['id'], FILTER_VALIDATE_INT, [
             'options' => [
-                'default' => 'all_records',
+                'default' => null,
+                'min_range' => 1
+            ]
+        ]);
+
+        $programid = filter_var($_GET['programid'], FILTER_VALIDATE_INT, [
+            'options' => [
+                'default' => null,
                 'min_range' => 1
             ]
         ]);
@@ -43,21 +51,42 @@
 
             $fetchData = null;
 
-            if ($userRole === 'Admin') {
-                $sql = "SELECT program_id, program, description FROM `college_programs_tbl`";
-                $stmt = $conn->prepare($sql);
-                $stmt ->execute();
+            if ($userRole === 'ADMIN') {
+
+                $sql = "SELECT c.user_id, c.program_id, u.name, c.program, c.description 
+                        FROM `college_programs_tbl` c
+                        LEFT JOIN `user_tbl` u ON u.user_id = c.user_id
+                        ORDER BY u.name";
+                    $stmt = $conn->prepare($sql);
+                    $stmt ->execute();
 
                 if ($stmt->rowCount() > 0) {
                     $fetchData = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 } else {
                     $fetchData = $stmt->fetch(PDO::FETCH_ASSOC);
                 }
+
+                if (!empty($programid)){
+                    $sql = "SELECT c.user_id, c.program_id, u.name, c.program, c.description 
+                        FROM `college_programs_tbl` c
+                        LEFT JOIN `user_tbl` u ON u.user_id = c.user_id
+                        WHERE c.program_id = :programid";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bindValue(':programid', $programid, PDO::PARAM_INT);
+                    $stmt ->execute();
+
+                    $fetchData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                }
+                
             } else {
                 // Query the database to fetch the programs based on the user ID
-                $sql = "SELECT program_id, program, description FROM `college_programs_tbl` WHERE user_id = :userid";
+                $sql = "SELECT c.user_id, c.program_id, u.name, c.program, c.description 
+                        FROM `college_programs_tbl` c
+                        INNER JOIN `user_tbl` u ON u.user_id = c.user_id
+                        WHERE u.user_id = :userid";
                 $stmt = $conn->prepare($sql);
-                $stmt->bindValue(':userid', $userid);
+                $stmt->bindValue(':userid', $userid, PDO::PARAM_INT);
                 $stmt->execute();
 
                 // Fetch the program options
@@ -66,7 +95,10 @@
             }
 
             // Send the response as JSON
-            echo json_encode($fetchData);
+            echo json_encode([
+                'data' => $fetchData,
+                'userRole' => $userRole
+            ]);
 
         }
 
