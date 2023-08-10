@@ -27,8 +27,6 @@
     $conn = $database->dbConnection();
 
     $data = json_decode(file_get_contents("php://input"));
-
-    //var_dump($data);
     
     $email = $data->email;
     $password = $data->password;
@@ -36,8 +34,6 @@
     try {
         $sql = "SELECT user_id, user_role FROM `user_tbl` WHERE user_email = '$email' AND user_password = '$password'";
         $stmt = $conn->prepare($sql);
-        // $stmt->bindValue(':email', $email, PDO::PARAM_STR);
-        // $stmt->bindValue(':password', $password, PDO::PARAM_STR);
         $stmt->execute();
 
 
@@ -50,7 +46,6 @@
             header('Content-Type: application/json');
             echo json_encode([
                 'success' => 1,
-                // $fetchedData,
                 'data' => $fetchedData,
                 //'message' => 'Valid credentials',
             ]);

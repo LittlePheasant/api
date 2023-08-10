@@ -39,7 +39,7 @@
         } else {
             $userid = filter_var($_POST['user_id'], FILTER_VALIDATE_INT, [
                 'options' => [
-                    'default' => 'all_records',
+                    'default' => null,
                     'min_range' => 1
                 ]
             ]);

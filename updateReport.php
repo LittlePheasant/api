@@ -44,6 +44,8 @@
         $count_total = null;
         $status = null;
 
+        $updatedData = [];
+
         if (isset($_GET['id'])) {
             $entryid = filter_var($_GET['id'], FILTER_VALIDATE_INT, [
                 'options' => [
@@ -159,8 +161,6 @@
 
                 $count_total = $total_count_male_female * $weight;
 
-            } else {
-                http_response_code(400);
             }
 
         } else {
@@ -180,6 +180,18 @@
 
             $status = $formFields['status'];
         }
+
+        $date_entry = $_POST['date_entry'];
+        $title = $_POST['title'];
+        $type_beneficiary = $_POST['type_beneficiary'];
+        $poor_rate = $_POST['poor_rate'];
+        $fair_rate = $_POST['fair_rate'];
+        $serviceOpt = $_POST['serviceOpt'];
+        $partners = $_POST['partners'];
+        $fac_staff = $_POST['fac_staff'];
+        $role = $_POST['role'];
+        $cost_fund = $_POST['cost_fund'];
+        $file = $_POST['file'];
 
         if (!empty($status)) {
 
@@ -224,6 +236,8 @@
                         'satisfactory_rate' => $satisfactoryrate,
                         'verysatisfactory_rate' => $verysatisfactoryrate,
                         'excellent_rate' => $excellentrate,
+                        'total_rate_by_length' => $result,
+                        'total_trainees_by_length' => $count_total,
                         'duration' => $duration,
                         'unitOpt' => $unitOpt,
                         'serviceOpt' => $serviceOpt,
@@ -281,6 +295,8 @@
                                 'satisfactory_rate' => $satisfactoryrate,
                                 'verysatisfactory_rate' => $verysatisfactoryrate,
                                 'excellent_rate' => $excellentrate,
+                                'total_rate_by_length' => $result,
+                                'total_trainees_by_length' => $count_total,
                                 'duration' => $duration,
                                 'unitOpt' => $unitOpt,
                                 'serviceOpt' => $serviceOpt,
@@ -309,6 +325,8 @@
                     ]);
                 }
             }
+
+            //echo json_encode(['data' => $updatedData]);
 
             // Retrieve the original row from the database
             $fetchSql = "SELECT * FROM `monthlyreport_tbl` WHERE entry_id = :entryid";
@@ -365,18 +383,26 @@
 
                     // Extract the quarter from the date (1, 2, 3, or 4)
                     $quarter = ceil(date('n', strtotime($date_entry)) / 3);
+
+                    // Calculate the starting and ending months of the selected quarter
+                    $startMonth = ($quarter - 1) * 3 + 1;
+                    $endMonth = $quarter * 3;
+                    
                     if ($quarter >= 1 && $quarter <= 4) {
                         $quarter_id = $quarter;
+                        $particular_id = 1;
 
-                        $countQuery = "SELECT COUNT(_file) AS count_total FROM `monthlyreport_tbl` WHERE user_id = :userid";
+                        $countQuery = "SELECT COUNT(_file) AS count_total 
+                                    FROM `monthlyreport_tbl`
+                                    WHERE user_id =:userid AND MONTH(date_entry) BETWEEN $startMonth AND $endMonth";
 
-                        $countStmt = $conn ->prepare($countQuery);
-                        $countStmt ->bindValue(':userid', $userid, PDO::PARAM_INT);
+                        $countStmt = $conn->prepare($countQuery);
+                        $countStmt->bindValue(':userid', $userid, PDO::PARAM_INT);
                         
                         if ($countStmt ->execute()) {
 
                             $countResult = $countStmt->fetch(PDO::FETCH_ASSOC);
-                            $count = $countResult['count_total'];
+                            $count = (int) $countResult['count_total'];
                             $particular_id = 1;
 
                             // Update `count` field in `actualreportbytotal_tbl` table
@@ -390,7 +416,9 @@
 
                             if (!empty($unitOpt)) { //checks if uniopt is not empty
 
-                                $countQuery = "SELECT SUM(total_trainees_by_length) as totalSum FROM `monthlyreport_tbl` WHERE user_id = :userid";
+                                $countQuery = "SELECT SUM(total_trainees_by_length) as totalSum 
+                                                FROM `monthlyreport_tbl` 
+                                                WHERE user_id = :userid AND MONTH(date_entry) BETWEEN $startMonth AND $endMonth";
 
                                 $countStmt = $conn ->prepare($countQuery);
                                 $countStmt ->bindValue(':userid', $userid, PDO::PARAM_INT);
@@ -439,7 +467,9 @@
                             if (!empty($satisfactoryrate) && !empty($verysatisfactoryrate) 
                                                                 && !empty($excellentrate)) {
 
-                                $countQuery = "SELECT COUNT(*) AS rowCount, SUM(total_rate_by_length) AS totalSum FROM `monthlyreport_tbl` WHERE user_id = :userid";
+                                $countQuery = "SELECT COUNT(*) AS rowCount, SUM(total_rate_by_length) AS totalSum
+                                                FROM `monthlyreport_tbl` 
+                                                WHERE user_id = :userid AND MONTH(date_entry) BETWEEN $startMonth AND $endMonth";
 
                                 $countStmt = $conn ->prepare($countQuery);
                                 $countStmt ->bindValue(':userid', $userid, PDO::PARAM_INT);
@@ -466,7 +496,6 @@
 
                             }
 
-                            
                             echo json_encode([
                                 'success' => 1,
                                 'message' => 'Successfully updated!'
@@ -481,7 +510,10 @@
                         
                     } else {
                         //INVALID DATE
-                        throw new Exception("Invalid date.");
+                        echo json_encode([
+                            'success' => 0,
+                            'message' => 'Invalid date.'
+                        ]);
                     }
                 } else {
                     echo json_encode([

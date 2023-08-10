@@ -127,7 +127,7 @@
                     }
                 }
 
-                //computation for particular_id 3
+                //computation for particular_id 2
                 if ($unitOpt == 'Hours') {
                     if ($duration === 8) {
                         $weight = 1;
@@ -203,7 +203,7 @@
         if (file_exists($filePath)) {
             echo json_encode([
                 'success' => 0,
-                'message' => 'File already exists => ' . $filePath;
+                'message' => 'File already exists => ' . $filePath
             ]);
             exit();
         } else {
@@ -297,6 +297,10 @@
 
                             // Extract the quarter from the date (1, 2, 3, or 4)
                             $quarter = ceil(date('n', strtotime($date_entry)) / 3);
+                            
+                            // Calculate the starting and ending months of the selected quarter
+                            $startMonth = ($quarter - 1) * 3 + 1;
+                            $endMonth = $quarter * 3;
 
                             if ($quarter >= 1 && $quarter <= 4) {
                                 $quarter_id = $quarter;
@@ -315,14 +319,16 @@
                                     //Check if file is empty
                                     if (!empty($_FILES['file'])){
 
-                                        $countQuery = "SELECT COUNT(_file) AS count_total FROM `monthlyreport_tbl` WHERE user_id = :userid";
-        
-                                        $countStmt = $conn ->prepare($countQuery);
-                                        $countStmt ->bindValue(':userid', $userid, PDO::PARAM_INT);
+                                        $countQuery = "SELECT COUNT(_file) AS count_total 
+                                        FROM `monthlyreport_tbl`
+                                        WHERE user_id =:userid AND MONTH(date_entry) BETWEEN $startMonth AND $endMonth";
+    
+                                        $countStmt = $conn->prepare($countQuery);
+                                        $countStmt->bindValue(':userid', $userid, PDO::PARAM_INT);
                                         $countStmt ->execute();
                                         $countResult = $countStmt->fetch(PDO::FETCH_ASSOC);
 
-                                        $count = $countResult['count_total'];
+                                        $count = (int) $countResult['count_total'];
 
                                         // Update `count` field in `actualreportbytotal_tbl` table
                                         $updateQuery = "UPDATE `actualreportbytotal_tbl` SET count = :count WHERE user_id = :userid AND quarter_id = :quarter_id AND particular_id = :particular_id";
@@ -335,10 +341,10 @@
                                         
                                         if (!empty($unitOpt)) { //checks if uniopt is not empty
 
-                                            $particular_id = 2;
+                                            $countQuery = "SELECT SUM(total_trainees_by_length) as totalSum 
+                                                FROM `monthlyreport_tbl` 
+                                                WHERE user_id = :userid AND MONTH(date_entry) BETWEEN $startMonth AND $endMonth";
 
-                                            $countQuery = "SELECT SUM(total_trainees_by_length) as totalSum FROM `monthlyreport_tbl` WHERE user_id = :userid";
-        
                                             $countStmt = $conn ->prepare($countQuery);
                                             $countStmt ->bindValue(':userid', $userid, PDO::PARAM_INT);
                                             $countStmt ->execute();
@@ -347,7 +353,7 @@
                                             $total_count = null;
                                             $count = doubleval($countResult['totalSum']);
                                             $total_count = round($count, 2);
-                                            
+                                            $particular_id = 2;
                                             // Update `count` field in `actualreportbytotal_tbl` table
             
                                             $updateQuery = "UPDATE `actualreportbytotal_tbl` SET count = :total_count
@@ -357,17 +363,7 @@
                                             $updateStmt->bindValue(':userid', $userid, PDO::PARAM_INT);
                                             $updateStmt->bindValue(':quarter_id', $quarter_id, PDO::PARAM_INT);
                                             $updateStmt->bindValue(':particular_id', $particular_id, PDO::PARAM_INT);
-                                            if($updateStmt->execute()){
-                                                echo json_encode([
-                                                    'success' => 1,
-                                                    'message' => '2'
-                                                ]);
-                                            } else {
-                                                echo json_encode([
-                                                    'success' => 0,
-                                                    'message' => '2'
-                                                ]);
-                                            }
+                                            $updateStmt->execute()
                                         }
 
                                         if (!empty($programid)) {
@@ -389,26 +385,18 @@
                                             $updateStmt->bindValue(':userid', $userid, PDO::PARAM_INT);
                                             $updateStmt->bindValue(':quarter_id', $quarter_id, PDO::PARAM_INT);
                                             $updateStmt->bindValue(':particular_id', $particular_id, PDO::PARAM_INT);
-                                            if($updateStmt->execute()){
-                                                echo json_encode([
-                                                    'success' => 1,
-                                                    'message' => '3'
-                                                ]);
-                                            } else {
-                                                echo json_encode([
-                                                    'success' => 0,
-                                                    'message' => '3'
-                                                ]);
-                                            }
+                                            $updateStmt->execute()
                                         }
 
                                         if (!empty($satisfactoryrate) && !empty($verysatisfactoryrate) 
                                                                             && !empty($excellentrate)) {
 
-                                            $particular_id = 4;
+                                            
 
-                                            $countQuery = "SELECT COUNT(*) AS rowCount, SUM(total_rate_by_length) AS totalSum FROM `monthlyreport_tbl` WHERE user_id = :userid";
-        
+                                            $countQuery = "SELECT COUNT(*) AS rowCount, SUM(total_rate_by_length) AS totalSum
+                                                FROM `monthlyreport_tbl` 
+                                                WHERE user_id = :userid AND MONTH(date_entry) BETWEEN $startMonth AND $endMonth";
+
                                             $countStmt = $conn ->prepare($countQuery);
                                             $countStmt ->bindValue(':userid', $userid, PDO::PARAM_INT);
                                             $countStmt ->execute();
@@ -422,6 +410,7 @@
 
                                             $initialCount = $totalSum / $rowCount;
                                             $total_count = round($initialCount, 2);
+                                            $particular_id = 4;
 
                                             $updateQuery = "UPDATE `actualreportbytotal_tbl` SET count = :total_count WHERE user_id = :userid AND quarter_id = :quarter_id AND particular_id = :particular_id";
                                             $updateStmt = $conn->prepare($updateQuery);
@@ -429,17 +418,7 @@
                                             $updateStmt->bindValue(':quarter_id', $quarter_id, PDO::PARAM_INT);
                                             $updateStmt->bindValue(':particular_id', $particular_id, PDO::PARAM_INT);
                                             $updateStmt->bindValue(':total_count', strval($total_count), PDO::PARAM_STR);
-                                            if($updateStmt->execute()){
-                                                echo json_encode([
-                                                    'success' => 1,
-                                                    'message' => '4'
-                                                ]);
-                                            } else {
-                                                echo json_encode([
-                                                    'success' => 0,
-                                                    'message' => '4'
-                                                ]);
-                                            }
+                                            $updateStmt->execute()
 
                                         }
                                     } else {
@@ -476,9 +455,10 @@
 
                                         if (!empty($unitOpt)) { //checks if uniopt is not empty
 
-                                            $particular_id = 2;
-                                            $countQuery = "SELECT SUM(total_trainees_by_length) as totalSum FROM `monthlyreport_tbl` WHERE user_id = :userid";
-        
+                                            $countQuery = "SELECT SUM(total_trainees_by_length) as totalSum 
+                                                FROM `monthlyreport_tbl` 
+                                                WHERE user_id = :userid AND MONTH(date_entry) BETWEEN $startMonth AND $endMonth";
+
                                             $countStmt = $conn ->prepare($countQuery);
                                             $countStmt ->bindValue(':userid', $userid, PDO::PARAM_INT);
                                             $countStmt ->execute();
@@ -488,7 +468,7 @@
                                             $total_count = null;
                                             $count = doubleval($countResult['totalSum']);
                                             $total_count = round($count, 2);
-                                            
+                                            $particular_id = 2;
                                             // Update `count` field in `actualreportbytotal_tbl` table
             
                                             $insertQuery = "INSERT INTO `actualreportbytotal_tbl` (
@@ -507,17 +487,7 @@
                                             $insertStmt->bindValue(':userid', $userid, PDO::PARAM_INT);
                                             $insertStmt->bindValue(':quarter_id', $quarter_id, PDO::PARAM_INT);
                                             $insertStmt->bindValue(':particular_id', $particular_id, PDO::PARAM_INT);
-                                            if($insertStmt->execute()){
-                                                echo json_encode([
-                                                    'success' => 1,
-                                                    'message' => '2'
-                                                ]);
-                                            } else {
-                                                echo json_encode([
-                                                    'success' => 0,
-                                                    'message' => '2'
-                                                ]);
-                                            }
+                                            $insertStmt->execute();
     
                                         }
     
@@ -550,26 +520,16 @@
                                             $insertStmt->bindValue(':particular_id', $particular_id, PDO::PARAM_INT);
                                             $insertStmt->bindValue(':userid', $userid, PDO::PARAM_INT);
                                             $insertStmt->bindValue(':total_count', $total_count, PDO::PARAM_INT);
-                                            if($insertStmt->execute()){
-                                                echo json_encode([
-                                                    'success' => 1,
-                                                    'message' => '3'
-                                                ]);
-                                            } else {
-                                                echo json_encode([
-                                                    'success' => 0,
-                                                    'message' => '3'
-                                                ]);
-                                            }
+                                            $insertStmt->execute();
                                         }
     
                                         if (!empty($satisfactoryrate) && !empty($verysatisfactoryrate) 
                                                                             && !empty($excellentrate)) {
     
-                                            $particular_id = 4;
-    
-                                            $countQuery = "SELECT COUNT(*) AS rowCount, SUM(total_rate_by_length) AS totalSum FROM `monthlyreport_tbl` WHERE user_id = :userid";
-        
+                                            $countQuery = "SELECT COUNT(*) AS rowCount, SUM(total_rate_by_length) AS totalSum
+                                                FROM `monthlyreport_tbl` 
+                                                WHERE user_id = :userid AND MONTH(date_entry) BETWEEN $startMonth AND $endMonth";
+
                                             $countStmt = $conn ->prepare($countQuery);
                                             $countStmt ->bindValue(':userid', $userid, PDO::PARAM_INT);
                                             $countStmt ->execute();
@@ -583,7 +543,8 @@
 
                                             $initialCount = $totalSum / $rowCount;
                                             $total_count = round($initialCount, 2);
-    
+                                            $particular_id = 4;
+
                                             $insertQuery = "INSERT INTO `actualreportbytotal_tbl` (
                                                         quarter_id,
                                                         particular_id,
@@ -601,17 +562,7 @@
                                             $insertStmt->bindValue(':particular_id', $particular_id, PDO::PARAM_INT);
                                             $insertStmt->bindValue(':userid', $userid, PDO::PARAM_INT);
                                             $insertStmt->bindValue(':total_count', strval($total_count), PDO::PARAM_STR);
-                                            if($insertStmt->execute()){
-                                                echo json_encode([
-                                                    'success' => 1,
-                                                    'message' => '4'
-                                                ]);
-                                            } else {
-                                                echo json_encode([
-                                                    'success' => 0,
-                                                    'message' => '4'
-                                                ]);
-                                            }
+                                            $insertStmt->execute();
                                         }
                                     } else {
                                         http_response_code(500);
