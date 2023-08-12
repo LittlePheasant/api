@@ -5,7 +5,7 @@
     header("Content-Type: application/json");
     
     
-    error_reporting(E_ALL);
+    error_reporting(E_ERROR);
     $method = $_SERVER['REQUEST_METHOD'];
 
     if ($method == "OPTIONS") {
